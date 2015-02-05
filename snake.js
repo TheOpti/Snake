@@ -39,6 +39,7 @@ function gameLoop() {
     snake.unshift(newPos);
     drawSnake(snake);
     paintCell(food.x, food.y);
+    checkCollision();
     setTimeout(gameLoop, frameLength);
 }
 
@@ -106,6 +107,13 @@ function generateFood() {
     }
 }
 
+function clearFood() {
+    ctx.fillStyle = "white";
+    ctx.fillRect(food.x*10, food.y*10, 10, 10);
+    ctx.strokeStyle = "white";
+    ctx.strokeRect(food.x*10, food.y*10, 10, 10);
+}
+
 function checkIfFoodXYCorrect() {
     for (var i = 0; i < snake.length; i++) {
         if (snake[i].x === food.x && snake[i].y === food.y) {
@@ -113,6 +121,14 @@ function checkIfFoodXYCorrect() {
         };
     }
     return true;
+}
+
+function checkCollision() {
+    if (snake[0].x === food.x && snake[0].y === food.y) {
+        snake.push({x: food.x, y: food.y});
+        clearFood();
+        generateFood();
+    }
 }
 
 function createSnake() {
@@ -132,7 +148,7 @@ function paintCell(x, y) {
 
 
 function drawBoard() {
-    ctx.fillStyle = '#fe57a1'; //hot pink!
+    ctx.fillStyle = '#fe57a1';
     $canvas.css("border", "1px solid #000000");
 }
 
