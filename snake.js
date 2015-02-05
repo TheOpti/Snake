@@ -31,7 +31,7 @@ function gameLoop() {
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
     ctx.strokeStyle = "black";
     ctx.strokeRect(0, 0, WIDTH, HEIGHT);
-    var frameLength = 100;
+    var frameLength = 150;
     var next = checkDirection();
     var newPos = snake.pop();
     newPos.x = next.X;
@@ -124,11 +124,23 @@ function checkIfFoodXYCorrect() {
 }
 
 function checkCollision() {
-    if (snake[0].x === food.x && snake[0].y === food.y) {
+    var snakeX = snake[0].x;
+    var snakeY = snake[0].y;
+    
+    for (var i = 1; i < snake.length; ++i) {
+        if ((snakeX === snake[i].x && snakeY === snake[i].y) ||
+                (snakeX < 0 || snakeX > WIDTH/10 || snakeY < 0 || snakeY > HEIGHT/10) ) {
+            console.log("game over!");
+        }
+    }
+    
+    if (snakeX === food.x && snakeY === food.y) {
         snake.push({x: food.x, y: food.y});
         clearFood();
         generateFood();
     }
+
+    
 }
 
 function createSnake() {
