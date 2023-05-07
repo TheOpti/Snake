@@ -1,100 +1,106 @@
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { DIRECTIONS, DIMENSIONS, FRAME_LENGTH } from './constants';
 
-var WIDTH = 800;
-var HEIGHT = 600;
+const canvasElement = document.getElementById('canvas');
 
-var $canvas = document.getElementById('canvas');
+canvasElement.setAttribute('width', DIMENSIONS.WIDTH);
+canvasElement.setAttribute('height', DIMENSIONS.HEIGHT);
 
-$canvas.setAttribute('width', WIDTH);
-$canvas.setAttribute('height', HEIGHT);
+var canvasContext = canvasElement.getContext('2d');
 
-var ctx = $canvas.getContext('2d');
+const snake = [];
+let food = {};
+let points = 0;
 
-document.addEventListener('keydown', checkKey);
-
-var snake = [];
-var food = {};
-var points = 0;
-
-var direction = 'right';
+let currentDirection = DIRECTIONS.RIGHT;
 
 function initializeGame() {
+  document.addEventListener('keydown', checkKey);
+
   createSnake();
-  drawSnake(snake);
   generateFood();
   gameLoop();
 }
 
 function gameLoop() {
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  ctx.strokeStyle = 'black';
-  ctx.strokeRect(0, 0, WIDTH, HEIGHT);
-  var frameLength = 150;
-  var next = checkDirection();
-  var newPos = snake.pop();
+  canvasContext.fillStyle = 'white';
+  canvasContext.fillRect(0, 0, DIMENSIONS.WIDTH, DIMENSIONS.HEIGHT);
+  canvasContext.strokeStyle = 'black';
+  canvasContext.strokeRect(0, 0, DIMENSIONS.WIDTH, DIMENSIONS.HEIGHT);
+
+  const next = getNextSnakePosition();
+
+  // Get last element from snake and set it as first position
+  const newPos = snake.pop();
   newPos.x = next.X;
   newPos.y = next.Y;
   snake.unshift(newPos);
-  drawSnake(snake);
+  drawSnake();
+
   paintCell(food.x, food.y);
   checkCollision();
-  setTimeout(gameLoop, frameLength);
+  setTimeout(gameLoop, FRAME_LENGTH);
 }
 
-function checkDirection() {
-  if (direction === 'right') {
-    return {
-      X: snake[0].x + 1,
-      Y: snake[0].y + 0,
-    };
-  } else if (direction === 'left') {
-    return {
-      X: snake[0].x - 1,
-      Y: snake[0].y + 0,
-    };
-  } else if (direction === 'up') {
-    return {
-      X: snake[0].x + 0,
-      Y: snake[0].y + 1,
-    };
-  } else if (direction === 'down') {
-    return {
-      X: snake[0].x + 0,
-      Y: snake[0].y - 1,
-    };
-  } else {
-    return {
-      X: snake[0].x + 0,
-      Y: snake[0].y + 0,
-    };
+function createSnake() {
+  var length = 15;
+  for (var i = length; i > 10; i--) {
+    snake.push({ x: i, y: 5 });
+  }
+}
+
+function getNextSnakePosition() {
+  switch (currentDirection) {
+    case DIRECTIONS.RIGHT: {
+      return {
+        X: snake[0].x + 1,
+        Y: snake[0].y + 0,
+      };
+    }
+    case DIRECTIONS.LEFT: {
+      return {
+        X: snake[0].x - 1,
+        Y: snake[0].y + 0,
+      };
+    }
+    case DIRECTIONS.UP: {
+      return {
+        X: snake[0].x + 0,
+        Y: snake[0].y + 1,
+      };
+    }
+    case DIRECTIONS.DOWN: {
+      return {
+        X: snake[0].x + 0,
+        Y: snake[0].y - 1,
+      };
+    }
   }
 }
 
 function checkKey(event) {
-  if (event.keyCode === 38 && direction !== 'up') {
-    direction = 'down';
-  } else if (event.keyCode === 40 && direction !== 'down') {
-    direction = 'up';
-  } else if (event.keyCode === 37 && direction !== 'right') {
-    direction = 'left';
-  } else if (event.keyCode === 39 && direction !== 'left') {
-    direction = 'right';
+  if (event.keyCode === 38 && currentDirection !== DIRECTIONS.UP) {
+    currentDirection = DIRECTIONS.DOWN;
+  } else if (event.keyCode === 40 && currentDirection !== DIRECTIONS.DOWN) {
+    currentDirection = DIRECTIONS.UP;
+  } else if (event.keyCode === 37 && currentDirection !== DIRECTIONS.RIGHT) {
+    currentDirection = DIRECTIONS.LEFT;
+  } else if (event.keyCode === 39 && currentDirection !== DIRECTIONS.LEFT) {
+    currentDirection = DIRECTIONS.RIGHT;
   }
 }
 
-function drawSnake(snake) {
-  for (var i = 0; i < snake.length; i++) {
-    var c = snake[i];
-    paintCell(c.x, c.y);
-  }
+function drawSnake() {
+  snake.forEach(({ x, y }) => {
+    paintCell(x, y);
+  });
 }
 
 function generateFood() {
   food = {
-    x: Math.round((Math.random() * (WIDTH - 10)) / 10),
-    y: Math.round((Math.random() * (HEIGHT - 10)) / 10),
+    x: Math.round((Math.random() * (DIMENSIONS.WIDTH - 20)) / 20),
+    y: Math.round((Math.random() * (DIMENSIONS.HEIGHT - 20)) / 20),
   };
   if (!checkIfFoodXYCorrect()) {
     generateFood();
@@ -102,10 +108,10 @@ function generateFood() {
 }
 
 function clearFood() {
-  ctx.fillStyle = 'white';
-  ctx.fillRect(food.x * 10, food.y * 10, 10, 10);
-  ctx.strokeStyle = 'white';
-  ctx.strokeRect(food.x * 10, food.y * 10, 10, 10);
+  canvasContext.fillStyle = 'white';
+  canvasContext.fillRect(food.x * 20, food.y * 20, 20, 20);
+  canvasContext.strokeStyle = 'white';
+  canvasContext.strokeRect(food.x * 20, food.y * 20, 20, 20);
 }
 
 function checkIfFoodXYCorrect() {
@@ -118,19 +124,20 @@ function checkIfFoodXYCorrect() {
 }
 
 function checkCollision() {
-  var snakeX = snake[0].x;
-  var snakeY = snake[0].y;
+  const { x: snakeX, y: snakeY } = snake[0];
 
-  for (var i = 1; i < snake.length; ++i) {
-    if (
-      (snakeX === snake[i].x && snakeY === snake[i].y) ||
-      snakeX < 0 ||
-      snakeX > WIDTH / 10 ||
-      snakeY < 0 ||
-      snakeY > HEIGHT / 10
-    ) {
-      console.log('game over!');
-    }
+  const isOutOfBounds =
+    snakeX < 0 ||
+    snakeX > DIMENSIONS.WIDTH / 20 ||
+    snakeY < 0 ||
+    snakeY > DIMENSIONS.HEIGHT / 20;
+
+  const hasCollisionWithItself = snake.some(
+    ({ x, y }, idx) => idx !== 0 && snakeX === x && snakeY === y
+  );
+
+  if (isOutOfBounds || hasCollisionWithItself) {
+    console.log('game over!');
   }
 
   if (snakeX === food.x && snakeY === food.y) {
@@ -140,18 +147,11 @@ function checkCollision() {
   }
 }
 
-function createSnake() {
-  var length = 15;
-  for (var i = length; i > 10; i--) {
-    snake.push({ x: i, y: 5 });
-  }
-}
-
 function paintCell(x, y) {
-  ctx.fillStyle = 'blue';
-  ctx.fillRect(x * 10, y * 10, 10, 10);
-  ctx.strokeStyle = 'white';
-  ctx.strokeRect(x * 10, y * 10, 10, 10);
+  canvasContext.fillStyle = 'blue';
+  canvasContext.fillRect(x * 20, y * 20, 20, 20);
+  canvasContext.strokeStyle = 'white';
+  canvasContext.strokeRect(x * 20, y * 20, 20, 20);
 }
 
 initializeGame();
